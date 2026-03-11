@@ -11,11 +11,11 @@
   :root {
     --bg: #0a0e14;
     --panel: #111720;
-    --border: #1e2d3d;
+    --border: #2a3d52;
     --accent: #00d4ff;
     --accent2: #ff6b35;
-    --text: #c8d8e8;
-    --muted: #4a6070;
+    --text: #deeaf6;
+    --muted: #7a9ab8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -370,6 +370,36 @@
     white-space: nowrap;
     z-index: 50;
   }
+
+  .chart-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chart-filter-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .chart-fbtn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 3px 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.62rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+
+  .chart-fbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .chart-fbtn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
 </style>
 </head>
 <body>
@@ -451,9 +481,18 @@
       <span class="chart-title">TIME SERIES — ALL SENSORS · Mar 6 16:00–23:00</span>
       <span class="chart-sub">W/m² · 10-min avg · hover for values</span>
     </div>
+    <div class="chart-filter-row" id="ts-filter-row">
+      <span class="chart-filter-label">FILTER:</span>
+      <button class="chart-fbtn active" data-mote="all" onclick="setTsFilter('all',this)">ALL</button>
+      <button class="chart-fbtn" data-mote="2" onclick="setTsFilter('2',this)">M2</button>
+      <button class="chart-fbtn" data-mote="3" onclick="setTsFilter('3',this)">M3</button>
+      <button class="chart-fbtn" data-mote="4" onclick="setTsFilter('4',this)">M4</button>
+      <button class="chart-fbtn" data-mote="5" onclick="setTsFilter('5',this)">M5</button>
+      <button class="chart-fbtn" data-mote="6" onclick="setTsFilter('6',this)">M6</button>
+      <button class="chart-fbtn" data-mote="7" onclick="setTsFilter('7',this)">M7</button>
+    </div>
     <div class="chart-wrap">
       <canvas id="chart-ts"></canvas>
-      <div id="ts-tooltip" class="chart-tip"></div>
     </div>
   </div>
 
@@ -480,7 +519,7 @@
 </div>
 
 <script>
-const COORDS = {"a_2":[5,10],"b_2":[3,9],"c_2":[3,5.5],"d_2":[5.5,4],"e_2":[7.5,5],"a_3":[4.5,17],"b_3":[5,14],"c_3":[3.5,20.5],"d_3":[3.5,15.5],"e_3":[4.5,13],"a_4":[7.5,13.5],"b_4":[5,20],"c_4":[5.5,18.5],"d_4":[7,17],"e_4":[7.5,11.5],"a_5":[12.5,16],"b_5":[11,20],"c_5":[9.5,17.7],"d_5":[10,13],"e_5":[13.5,18.5],"a_6":[12.5,10.5],"b_6":[6,5.5],"c_6":[12,6.5],"d_6":[10.5,8.5],"e_6":[8,3.5],"a_7":[12,14],"b_7":[10,5],"c_7":[8,8]};
+const COORDS = {"a_2":[5,-10],"b_2":[3,-9],"c_2":[3,-5.5],"d_2":[5.5,-4],"e_2":[7.5,-5],"a_3":[4.5,-17],"b_3":[5,-14],"c_3":[3.5,-20.5],"d_3":[3.5,-15.5],"e_3":[4.5,-13],"a_4":[7.5,-13.5],"b_4":[5,-20],"c_4":[5.5,-18.5],"d_4":[7,-17],"e_4":[7.5,-11.5],"a_5":[12.5,-16],"b_5":[11,-20],"c_5":[9.5,-17.7],"d_5":[10,-13],"e_5":[13.5,-18.5],"a_6":[12.5,-10.5],"b_6":[6,-5.5],"c_6":[12,-6.5],"d_6":[10.5,-8.5],"e_6":[8,-3.5],"a_7":[12,-14],"b_7":[10,-5],"c_7":[8,-8]};
 const SPIKE_MAX = {"a_2":77.258,"b_2":80.388,"c_2":69.219,"d_2":54.851,"e_2":81.259,"a_3":55.178,"b_3":83.888,"c_3":13.354,"d_3":75.169,"e_3":96.519,"a_4":85.381,"b_4":26.986,"c_4":26.291,"d_4":54.521,"e_4":92.35,"a_5":55.408,"b_5":40.711,"c_5":63.701,"d_5":72.439,"e_5":37.274,"a_6":68.605,"b_6":78.381,"c_6":56.047,"d_6":78.597,"e_6":48.769,"a_7":60.735,"b_7":50.76,"c_7":61.361};
 const BASELINE = {"a_2":0.594,"b_2":0.782,"c_2":0.57,"d_2":0.82,"e_2":0.896,"a_3":0.653,"b_3":0.868,"c_3":0.502,"d_3":0.847,"e_3":0.877,"a_4":0.854,"b_4":0.874,"c_4":0.797,"d_4":0.77,"e_4":0.653,"a_5":0.745,"b_5":1.0,"c_5":0.887,"d_5":0.784,"e_5":0.576,"a_6":0.822,"b_6":0.854,"c_6":0.751,"d_6":0.889,"e_6":0.773,"a_7":0.724,"b_7":0.713,"c_7":0.641};
 
@@ -506,18 +545,22 @@ function calcScale() {
 let SCALE = calcScale();
 let CW = Math.round(SANDBOX_W * SCALE) + PAD*2;
 let CH = Math.round(SANDBOX_H * SCALE) + PAD*2;
+let DPR = window.devicePixelRatio || 1;
 
 const heatCanvas = document.getElementById('heatmap');
 const overlayCanvas = document.getElementById('overlay');
 
 function resizeCanvases() {
   SCALE = calcScale();
+  DPR = window.devicePixelRatio || 1;
   CW = Math.round(SANDBOX_W * SCALE) + PAD*2;
   CH = Math.round(SANDBOX_H * SCALE) + PAD*2;
-  heatCanvas.width = overlayCanvas.width = CW;
-  heatCanvas.height = overlayCanvas.height = CH;
+  heatCanvas.width = overlayCanvas.width = CW * DPR;
+  heatCanvas.height = overlayCanvas.height = CH * DPR;
   heatCanvas.style.width = overlayCanvas.style.width = CW + 'px';
   heatCanvas.style.height = overlayCanvas.style.height = CH + 'px';
+  heatCanvas.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0);
+  overlayCanvas.getContext('2d').setTransform(DPR, 0, 0, DPR, 0, 0);
 }
 
 resizeCanvases();
@@ -559,7 +602,7 @@ let activeMote = 'all';
 let sliderIdx = 0;
 
 function toCanvasX(x) { return PAD + x * SCALE; }
-function toCanvasY(y) { return CH - PAD - y * SCALE; }
+function toCanvasY(y) { return PAD + (-y) * SCALE; }  // Q4: y is negative, -y maps to positive canvas coords
 
 function valueToColor(norm, alpha=0.85) {
   // Deep blue -> cyan -> yellow -> red
@@ -586,53 +629,27 @@ const SCALE_MIN = -10;
 const SCALE_MAX = 100;
 
 function drawHeatmap(values) {
-  const minV = SCALE_MIN;
-  const maxV = SCALE_MAX;
-
   hCtx.clearRect(0, 0, CW, CH);
   hCtx.fillStyle = '#0d1520';
   hCtx.fillRect(0, 0, CW, CH);
 
-  // Draw sandbox outline
-  hCtx.strokeStyle = '#1e2d3d';
-  hCtx.lineWidth = 1;
-  hCtx.strokeRect(PAD, PAD, SANDBOX_W*SCALE, SANDBOX_H*SCALE);
-
-  // Grid lines
-  hCtx.strokeStyle = 'rgba(30,45,61,0.4)';
-  hCtx.lineWidth = 0.5;
-  for (let x = 0; x <= SANDBOX_W; x += 3) {
-    hCtx.beginPath();
-    hCtx.moveTo(toCanvasX(x), PAD);
-    hCtx.lineTo(toCanvasX(x), CH-PAD);
-    hCtx.stroke();
-  }
-  for (let y = 0; y <= SANDBOX_H; y += 4) {
-    hCtx.beginPath();
-    hCtx.moveTo(PAD, toCanvasY(y));
-    hCtx.lineTo(CW-PAD, toCanvasY(y));
-    hCtx.stroke();
-  }
-
-  // RBF interpolation heatmap
-  const imgData = hCtx.getImageData(PAD, PAD, SANDBOX_W*SCALE, SANDBOX_H*SCALE);
-  const data = imgData.data;
-
-  const sensors = SENSOR_KEYS
-    .filter(k => activeMote === 'all' || k.endsWith('_'+activeMote))
-    .map(k => ({
-      cx: toCanvasX(COORDS[k][0]) - PAD,
-      cy: toCanvasY(COORDS[k][1]) - PAD,
-      v: values[k] || 0
-    }));
-
+  // RBF interpolation — draw directly as small rectangles, no getImageData DPR issues
+  const STEP = 2; // pixel step size — lower = sharper but slower
   const sigma2 = (SCALE * 3.5) ** 2;
 
-  for (let py = 0; py < SANDBOX_H*SCALE; py++) {
-    for (let px = 0; px < SANDBOX_W*SCALE; px++) {
+  const sensors = SENSOR_KEYS
+    .filter(k => activeMote === 'all' || k.endsWith('_' + activeMote))
+    .map(k => ({
+      cx: PAD + COORDS[k][0] * SCALE,        // canvas x (includes PAD)
+      cy: PAD + (-COORDS[k][1]) * SCALE,     // canvas y (Q4: negate y)
+      v: values[k] != null ? values[k] : 0
+    }));
+
+  for (let py = PAD; py < CH - PAD; py += STEP) {
+    for (let px = PAD; px < CW - PAD; px += STEP) {
       let wsum = 0, vsum = 0;
       for (const s of sensors) {
-        const d2 = (px-s.cx)**2 + (py-s.cy)**2;
+        const d2 = (px - s.cx) ** 2 + (py - s.cy) ** 2;
         const w = Math.exp(-d2 / sigma2);
         wsum += w;
         vsum += w * s.v;
@@ -641,21 +658,40 @@ function drawHeatmap(values) {
       const norm = Math.max(0, Math.min(1, (interp - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)));
 
       let r, g, b;
-      const n = Math.max(0, Math.min(1, norm));
-      if (n < 0.25) { const t=n/0.25; r=0; g=Math.round(20+t*180); b=Math.round(80+t*175); }
-      else if (n < 0.5) { const t=(n-0.25)/0.25; r=Math.round(t*20); g=Math.round(200+t*55); b=Math.round(255-t*255); }
-      else if (n < 0.75) { const t=(n-0.5)/0.25; r=Math.round(20+t*235); g=Math.round(255-t*50); b=0; }
-      else { const t=(n-0.75)/0.25; r=255; g=Math.round(205-t*205); b=0; }
+      const n = norm;
+      if      (n < 0.25) { const t=n/0.25;        r=0;                   g=Math.round(20+t*180);  b=Math.round(80+t*175); }
+      else if (n < 0.5)  { const t=(n-0.25)/0.25; r=Math.round(t*20);    g=Math.round(200+t*55);  b=Math.round(255-t*255); }
+      else if (n < 0.75) { const t=(n-0.5)/0.25;  r=Math.round(20+t*235);g=Math.round(255-t*50);  b=0; }
+      else               { const t=(n-0.75)/0.25; r=255;                  g=Math.round(205-t*205); b=0; }
 
-      const idx = (py * SANDBOX_W*SCALE + px) * 4;
-      data[idx] = r; data[idx+1] = g; data[idx+2] = b; data[idx+3] = 200;
+      hCtx.fillStyle = `rgba(${r},${g},${b},0.82)`;
+      hCtx.fillRect(px, py, STEP, STEP);
     }
   }
-  hCtx.putImageData(imgData, PAD, PAD);
 
-  // Update legend (always fixed scale)
+  // Sandbox outline
+  hCtx.strokeStyle = '#2a3d52';
+  hCtx.lineWidth = 1;
+  hCtx.strokeRect(PAD, PAD, SANDBOX_W * SCALE, SANDBOX_H * SCALE);
+
+  // Grid lines
+  hCtx.strokeStyle = 'rgba(42,61,82,0.4)';
+  hCtx.lineWidth = 0.5;
+  for (let x = 0; x <= SANDBOX_W; x += 3) {
+    hCtx.beginPath();
+    hCtx.moveTo(toCanvasX(x), PAD);
+    hCtx.lineTo(toCanvasX(x), CH - PAD);
+    hCtx.stroke();
+  }
+  for (let y = 0; y <= SANDBOX_H; y += 4) {
+    hCtx.beginPath();
+    hCtx.moveTo(PAD, toCanvasY(-y));
+    hCtx.lineTo(CW - PAD, toCanvasY(-y));
+    hCtx.stroke();
+  }
+
   updateLegend(SCALE_MIN, SCALE_MAX);
-  return { minV, maxV };
+  return { minV: SCALE_MIN, maxV: SCALE_MAX };
 }
 
 function drawOverlay(values) {
@@ -673,14 +709,15 @@ function drawOverlay(values) {
     const dotColor = intensityColor(norm);
     const labelColor = contrastText(norm);
     const gsLabel = SENSOR_IDS[k] || k;
+    const dotLabel = gsLabel.replace(/^(GS|HF)/, '');
 
-    // Radius scales with intensity, always >= 14 to fit the label text
-    const r = Math.max(14, 14 + norm * 6);
+    // Fixed radius — just enough to fit 3-digit label at 11px, never changes
+    const r = 14;
 
-    // Outer ring (mote color — subtle, just for mote grouping hint)
+    // Outer ring (mote color)
     oCtx.globalAlpha = 0.35;
     oCtx.beginPath();
-    oCtx.arc(cx, cy, r + 3, 0, Math.PI * 2);
+    oCtx.arc(cx, cy, r + 2, 0, Math.PI * 2);
     oCtx.strokeStyle = MOTE_COLORS[mote] || '#fff';
     oCtx.lineWidth = 1.5;
     oCtx.stroke();
@@ -692,17 +729,17 @@ function drawOverlay(values) {
     oCtx.fillStyle = dotColor;
     oCtx.fill();
 
-    // GS/HF label inside dot
+    // Number label
     oCtx.globalAlpha = 1;
     oCtx.fillStyle = labelColor;
-    oCtx.font = `bold 7px Share Tech Mono, monospace`;
+    oCtx.font = `bold 11px Share Tech Mono, monospace`;
     oCtx.textAlign = 'center';
     oCtx.textBaseline = 'middle';
-    oCtx.fillText(gsLabel, cx, cy);
+    oCtx.fillText(dotLabel, cx, cy);
   });
 
   // Axis labels
-  oCtx.fillStyle = '#2a3d50';
+  oCtx.fillStyle = '#7a9ab8';
   oCtx.font = '9px Share Tech Mono, monospace';
   oCtx.textAlign = 'center';
   for (let x = 0; x <= SANDBOX_W; x += 5) {
@@ -710,7 +747,7 @@ function drawOverlay(values) {
   }
   oCtx.textAlign = 'right';
   for (let y = 0; y <= SANDBOX_H; y += 6) {
-    oCtx.fillText(y+'"', PAD-3, toCanvasY(y)+4);
+    oCtx.fillText(y+'"', PAD-3, toCanvasY(-y)+4);  // pass negative y to toCanvasY
   }
 }
 
@@ -848,42 +885,60 @@ document.getElementById('time-display').textContent = TS_TIMES[0].split(' ')[1];
 // ── CHART HELPERS ──────────────────────────────────────────────────────────
 
 const MOTE_LIST = [2,3,4,5,6,7];
-const SHORT_TIMES = TS_TIMES.map(t => t.split(' ')[1].slice(0,5)); // "16:00"
+const SHORT_TIMES = TS_TIMES.map(t => t.split(' ')[1].slice(0,5));
+let tsFilterMote = 'all';
+
+function setTsFilter(mote, el) {
+  tsFilterMote = mote;
+  document.querySelectorAll('.chart-fbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  buildChart1();
+}
 
 function chartPad() { return {top:18, right:20, bottom:36, left:46}; }
 
+// Setup a canvas with DPR scaling, returns {ctx, W, H, dpr}
+function setupCanvas(id, logicalH) {
+  const canvas = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth || 960;
+  const H = logicalH;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, W, H, dpr };
+}
+
 function drawAxes(ctx, W, H, pad, xLabels, yMin, yMax, yTicks=5) {
-  ctx.strokeStyle = '#1e2d3d';
+  ctx.strokeStyle = '#2a3d52';
   ctx.lineWidth = 1;
-  // x axis
   ctx.beginPath(); ctx.moveTo(pad.left, H-pad.bottom); ctx.lineTo(W-pad.right, H-pad.bottom); ctx.stroke();
-  // y axis
-  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, H-pad.bottom); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top);       ctx.lineTo(pad.left, H-pad.bottom);    ctx.stroke();
 
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
-
-  // x labels — show every ~6 steps
   const step = Math.ceil(xLabels.length / 8);
   xLabels.forEach((lbl, i) => {
     if (i % step !== 0) return;
     const x = pad.left + (i / (xLabels.length-1)) * (W - pad.left - pad.right);
-    ctx.fillStyle = '#3a5060';
+    ctx.fillStyle = '#7a9ab8';
+    ctx.font = '10px Share Tech Mono, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(lbl, x, H - pad.bottom + 11);
-    ctx.strokeStyle = 'rgba(30,45,61,0.3)';
+    ctx.fillText(lbl, x, H - pad.bottom + 13);
+    ctx.strokeStyle = 'rgba(42,61,82,0.3)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H-pad.bottom); ctx.stroke();
   });
 
-  // y labels
   for (let i = 0; i <= yTicks; i++) {
     const v = yMin + (i/yTicks)*(yMax-yMin);
     const y = H - pad.bottom - (i/yTicks)*(H - pad.top - pad.bottom);
-    ctx.fillStyle = '#3a5060';
+    ctx.fillStyle = '#7a9ab8';
+    ctx.font = '10px Share Tech Mono, monospace';
     ctx.textAlign = 'right';
-    ctx.fillText(v.toFixed(0), pad.left - 4, y + 3);
-    ctx.strokeStyle = 'rgba(30,45,61,0.3)';
+    ctx.fillText(v.toFixed(0), pad.left - 5, y + 3);
+    ctx.strokeStyle = 'rgba(42,61,82,0.3)';
     ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
   }
@@ -899,6 +954,7 @@ function drawLine(ctx, xs, ys, color, alpha=0.7, width=1) {
   ctx.globalAlpha = alpha;
   ctx.strokeStyle = color;
   ctx.lineWidth = width;
+  ctx.lineJoin = 'round';
   ctx.beginPath();
   let started = false;
   xs.forEach((x,i) => {
@@ -912,19 +968,18 @@ function drawLine(ctx, xs, ys, color, alpha=0.7, width=1) {
 
 // ── CHART 1: Time Series ───────────────────────────────────────────────────
 function buildChart1() {
-  const canvas = document.getElementById('chart-ts');
-  const W = canvas.parentElement.clientWidth || 960;
-  const H = 220;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  const { ctx, W, H } = setupCanvas('chart-ts', 240);
   const pad = chartPad();
 
   ctx.fillStyle = '#0d1520';
   ctx.fillRect(0,0,W,H);
 
-  // find y range
+  const filteredKeys = tsFilterMote === 'all'
+    ? SENSOR_KEYS
+    : SENSOR_KEYS.filter(k => k.endsWith('_' + tsFilterMote));
+
   let yMin = Infinity, yMax = -Infinity;
-  SENSOR_KEYS.forEach(k => {
+  filteredKeys.forEach(k => {
     TS_VALS[k].forEach(v => { if(v!=null){ yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); } });
   });
   yMin = Math.floor(yMin/10)*10;
@@ -933,67 +988,38 @@ function buildChart1() {
   drawAxes(ctx, W, H, pad, SHORT_TIMES, yMin, yMax, 5);
 
   const n = TS_TIMES.length;
-  SENSOR_KEYS.forEach(k => {
+  filteredKeys.forEach(k => {
     const mote = k.split('_')[1];
     const color = MOTE_COLORS[mote];
     const xs = TS_VALS[k].map((_,i) => toChartX(i, n, W, pad));
     const ys = TS_VALS[k].map(v => v==null ? null : toChartY(v, yMin, yMax, H, pad));
-    drawLine(ctx, xs, ys, color, 0.55, 1);
+    drawLine(ctx, xs, ys, color, tsFilterMote === 'all' ? 0.55 : 0.85, tsFilterMote === 'all' ? 1 : 1.5);
   });
 
   // y-axis label
   ctx.save();
-  ctx.translate(10, H/2);
+  ctx.translate(11, H/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
+  ctx.fillStyle = '#7a9ab8';
+  ctx.font = '10px Share Tech Mono, monospace';
   ctx.textAlign = 'center';
   ctx.fillText('W/m²', 0, 0);
   ctx.restore();
 
-  // Hover tooltip
-  canvas.onmousemove = (e) => {
-    const tip = document.getElementById('ts-tooltip');
-    if (!tip) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const plotW = W - pad.left - pad.right;
-    const idx = Math.round(((mx - pad.left) / plotW) * (n-1));
-    if (idx < 0 || idx >= n) { tip.style.display='none'; return; }
-
-    // find closest sensor at this time index
-    let best = null, bestV = -Infinity;
-    SENSOR_KEYS.forEach(k => {
-      const v = TS_VALS[k][idx];
-      if (v != null && v > bestV) { bestV = v; best = k; }
-    });
-
-    if (!best) { tip.style.display='none'; return; }
-    const mote = best.split('_')[1];
-    tip.style.display = 'block';
-    tip.style.left = Math.min(mx+10, W-120) + 'px';
-    tip.style.top = '8px';
-    tip.innerHTML = `<span style="color:${MOTE_COLORS[mote]}">${SENSOR_IDS[best]}</span> ${SHORT_TIMES[idx]} · ${bestV.toFixed(2)} W/m²`;
-  };
-  canvas.onmouseleave = () => {
-    const tip = document.getElementById('ts-tooltip');
-    if (tip) tip.style.display='none';
-  };
+  // No hover tooltip
+  const canvas = document.getElementById('chart-ts');
+  canvas.onmousemove = null;
+  canvas.onmouseleave = null;
 }
 
 // ── CHART 2: Mote Comparison ───────────────────────────────────────────────
 function buildChart2() {
-  const canvas = document.getElementById('chart-mote');
-  const W = canvas.parentElement.clientWidth || 960;
-  const H = 200;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  const { ctx, W, H } = setupCanvas('chart-mote', 220);
   const pad = chartPad();
 
   ctx.fillStyle = '#0d1520';
   ctx.fillRect(0,0,W,H);
 
-  // compute per-mote averages at each timestep
   const moteAvgs = {};
   MOTE_LIST.forEach(m => {
     const keys = SENSOR_KEYS.filter(k => k.endsWith('_'+m));
@@ -1017,22 +1043,21 @@ function buildChart2() {
     const ys = moteAvgs[m].map(v => v==null ? null : toChartY(v, yMin, yMax, H, pad));
     drawLine(ctx, xs, ys, color, 0.9, 2);
 
-    // label at peak
     let peakI = 0, peakV = -Infinity;
     moteAvgs[m].forEach((v,i) => { if(v!=null && v>peakV){ peakV=v; peakI=i; } });
     const px = toChartX(peakI, n, W, pad);
     const py = toChartY(peakV, yMin, yMax, H, pad);
     ctx.fillStyle = color;
-    ctx.font = 'bold 7px Share Tech Mono, monospace';
+    ctx.font = 'bold 9px Share Tech Mono, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('M'+m, px, py - 5);
+    ctx.fillText('M'+m, px, py - 6);
   });
 
   ctx.save();
-  ctx.translate(10, H/2);
+  ctx.translate(11, H/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
+  ctx.fillStyle = '#7a9ab8';
+  ctx.font = '10px Share Tech Mono, monospace';
   ctx.textAlign = 'center';
   ctx.fillText('W/m²', 0, 0);
   ctx.restore();
@@ -1040,66 +1065,62 @@ function buildChart2() {
 
 // ── CHART 3: Cool-down Curve ───────────────────────────────────────────────
 function buildChart3() {
-  const canvas = document.getElementById('chart-cool');
-  const W = canvas.parentElement.clientWidth || 960;
-  const H = 200;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
+  const { ctx, W, H } = setupCanvas('chart-cool', 220);
   const pad = chartPad();
 
   ctx.fillStyle = '#0d1520';
   ctx.fillRect(0,0,W,H);
 
-  // find peak index per sensor, then normalise values from peak onward
-  // x-axis = minutes after peak
   const coolData = {};
-  let maxMinsAfterPeak = 0;
+  let maxLen = 0;
 
   SENSOR_KEYS.forEach(k => {
     const vals = TS_VALS[k];
     let peakI = 0, peakV = -Infinity;
     vals.forEach((v,i) => { if(v!=null && v>peakV){ peakV=v; peakI=i; } });
-    if (peakV <= 1) return; // skip flat sensors
+    if (peakV <= 1) return;
     const tail = vals.slice(peakI).map(v => v==null ? null : v/peakV);
-    coolData[k] = { tail, peakI, peakV };
-    maxMinsAfterPeak = Math.max(maxMinsAfterPeak, (tail.length-1)*10);
+    coolData[k] = tail;
+    maxLen = Math.max(maxLen, tail.length);
   });
 
-  const xTicks = Math.ceil(maxMinsAfterPeak/60)*6;
-  const xLabels = Array.from({length: Math.ceil(maxMinsAfterPeak/10)+1}, (_,i) => i*10+'m');
-
+  const xLabels = Array.from({length: maxLen}, (_,i) => i*10+'m');
   drawAxes(ctx, W, H, pad, xLabels, 0, 1, 4);
 
-  // override y labels to show percentages
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
+  // Re-draw y labels as %
+  ctx.fillStyle = '#0d1520';
+  const yLabelX = pad.left - 1;
+  [0,0.25,0.5,0.75,1].forEach(frac => {
+    const y = toChartY(frac, 0, 1, H, pad);
+    ctx.fillRect(0, y-8, pad.left-1, 14);
+  });
+  ctx.fillStyle = '#7a9ab8';
+  ctx.font = '10px Share Tech Mono, monospace';
   [0,0.25,0.5,0.75,1].forEach(frac => {
     const y = toChartY(frac, 0, 1, H, pad);
     ctx.textAlign = 'right';
-    ctx.fillText(Math.round(frac*100)+'%', pad.left-4, y+3);
+    ctx.fillText(Math.round(frac*100)+'%', pad.left-5, y+3);
   });
 
-  const maxLen = Math.max(...Object.values(coolData).map(d => d.tail.length));
-  Object.entries(coolData).forEach(([k, {tail}]) => {
+  Object.entries(coolData).forEach(([k, tail]) => {
     const mote = k.split('_')[1];
     const color = MOTE_COLORS[mote];
     const n = maxLen;
     const xs = tail.map((_,i) => toChartX(i, n, W, pad));
     const ys = tail.map(v => v==null ? null : toChartY(v, 0, 1, H, pad));
-    drawLine(ctx, xs, ys, color, 0.6, 1.2);
+    drawLine(ctx, xs, ys, color, 0.6, 1.5);
   });
 
-  // legend note
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
+  ctx.fillStyle = '#7a9ab8';
+  ctx.font = '10px Share Tech Mono, monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('100% = each sensor\'s individual peak value', pad.left+4, pad.top+10);
+  ctx.fillText('100% = each sensor\'s individual peak value', pad.left+6, pad.top+12);
 
   ctx.save();
-  ctx.translate(10, H/2);
+  ctx.translate(11, H/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillStyle = '#3a5060';
-  ctx.font = '8px Share Tech Mono, monospace';
+  ctx.fillStyle = '#7a9ab8';
+  ctx.font = '10px Share Tech Mono, monospace';
   ctx.textAlign = 'center';
   ctx.fillText('% of peak', 0, 0);
   ctx.restore();
