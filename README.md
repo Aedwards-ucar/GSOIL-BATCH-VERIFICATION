@@ -14,23 +14,23 @@ This tool visualizes heat flux readings (W/m²) from 28 ground soil sensors (GS 
 
 ## Sensors
 
-| Sensor ID | Key | Mote |    | Sensor ID | Key | Mote |
-|-----------|-----|------|    |-----------|-----|------|
-| GS112 | a2 | M2 |    | GS135 | a5 | M5 |
-| GS114 | b2 | M2 |    | GS137 | b5 | M5 |
-| GS115 | c2 | M2 |    | GS138 | c5 | M5 |
-| GS117 | d2 | M2 |    | GS140 | d5 | M5 |
-| GS118 | e2 | M2 |    | GS141 | e5 | M5 |
-| GS119 | a3 | M3 |    | GS142 | a6 | M6 |
-| GS120 | b3 | M3 |    | GS150 | b6 | M6 |
-| GS121 | c3 | M3 |    | GS151 | c6 | M6 |
-| GS122 | d3 | M3 |    | GS152 | d6 | M6 |
-| GS123 | e3 | M3 |    | GS153 | e6 | M6 |
-| GS124 | a4 | M4 |    | GS154 | a7 | M7 |
-| GS127 | b4 | M4 |    | GS157 | b7 | M7 |
-| GS128 | c4 | M4 |    | GS159 | c7 | M7 |
-| GS131 | d4 | M4 |    | | | |
-| GS133 | e4 | M4 |    | | | |
+| Sensor ID | Key | Mote | Sensor ID | Key | Mote |
+|-----------|-----|------|-----------|-----|------|
+| GS112 | a2 | M2 | GS135 | a5 | M5 |
+| GS114 | b2 | M2 | GS137 | b5 | M5 |
+| GS115 | c2 | M2 | GS138 | c5 | M5 |
+| GS117 | d2 | M2 | GS140 | d5 | M5 |
+| GS118 | e2 | M2 | GS141 | e5 | M5 |
+| GS119 | a3 | M3 | GS142 | a6 | M6 |
+| GS120 | b3 | M3 | GS150 | b6 | M6 |
+| GS121 | c3 | M3 | GS151 | c6 | M6 |
+| GS122 | d3 | M3 | GS152 | d6 | M6 |
+| GS123 | e3 | M3 | GS153 | e6 | M6 |
+| GS124 | a4 | M4 | GS154 | a7 | M7 |
+| GS127 | b4 | M4 | GS157 | b7 | M7 |
+| GS128 | c4 | M4 | GS159 | c7 | M7 |
+| GS131 | d4 | M4 | | | |
+| GS133 | e4 | M4 | | | |
 
 ---
 
