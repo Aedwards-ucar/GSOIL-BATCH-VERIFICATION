@@ -209,8 +209,8 @@
     border: 1px solid var(--border);
     padding: 12px;
     overflow-y: auto;
-    flex: 1
-    min-height: 0
+    flex: 1;
+    min-height: 0;
   }
 
   .sensor-table h3 {
@@ -493,15 +493,34 @@ const SENSOR_KEYS = Object.keys(COORDS);
 
 // Canvas setup
 const SANDBOX_W = 15, SANDBOX_H = 24;
-const SCALE = 22; // pixels per inch
 const PAD = 18;
-const CW = Math.round(SANDBOX_W * SCALE) + PAD*2;
-const CH = Math.round(SANDBOX_H * SCALE) + PAD*2;
+
+function calcScale() {
+  // Fit to ~80% of viewport height OR ~45% of viewport width, whichever gives a larger scale
+  // No upper cap — let it fill big screens naturally
+  const byHeight = Math.floor((window.innerHeight * 0.80 - PAD*2) / SANDBOX_H);
+  const byWidth  = Math.floor((window.innerWidth  * 0.45 - PAD*2) / SANDBOX_W);
+  return Math.max(22, Math.min(byHeight, byWidth));
+}
+
+let SCALE = calcScale();
+let CW = Math.round(SANDBOX_W * SCALE) + PAD*2;
+let CH = Math.round(SANDBOX_H * SCALE) + PAD*2;
 
 const heatCanvas = document.getElementById('heatmap');
 const overlayCanvas = document.getElementById('overlay');
-heatCanvas.width = overlayCanvas.width = CW;
-heatCanvas.height = overlayCanvas.height = CH;
+
+function resizeCanvases() {
+  SCALE = calcScale();
+  CW = Math.round(SANDBOX_W * SCALE) + PAD*2;
+  CH = Math.round(SANDBOX_H * SCALE) + PAD*2;
+  heatCanvas.width = overlayCanvas.width = CW;
+  heatCanvas.height = overlayCanvas.height = CH;
+  heatCanvas.style.width = overlayCanvas.style.width = CW + 'px';
+  heatCanvas.style.height = overlayCanvas.style.height = CH + 'px';
+}
+
+resizeCanvases();
 
 const hCtx = heatCanvas.getContext('2d');
 const oCtx = overlayCanvas.getContext('2d');
@@ -1094,7 +1113,11 @@ function buildAllCharts() {
 }
 
 // Rebuild on resize
-window.addEventListener('resize', buildAllCharts);
+window.addEventListener('resize', () => {
+  resizeCanvases();
+  render(getCurrentValues());
+  buildAllCharts();
+});
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(buildAllCharts, 50));
 } else {
