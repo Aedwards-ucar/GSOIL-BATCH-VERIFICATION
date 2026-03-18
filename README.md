@@ -154,7 +154,7 @@ Data is then resampled to 10-minute averages via Python (pandas) and embedded as
 - **HF138 (c5, Run 1)** — Heat flux plate sensor; behavior may differ from GS units
 - **Reversed wire polarity** — Some older GS units had factory-swapped red/black wires. Corrected on new connector installations
 - **Cold solder joints** — Intermittent readings on some GS units resolved by reflowing analog input pins 0–8
-- **Run 2 Cv assumed** — Volumetric heat capacity not measured; TP01 or similar recommended for future runs
+- **Run 2 Cv assumed** — Volumetric heat capacity not measured
 - **Tsoil/Gsoil spatial mismatch** — Probes positioned between clusters, not co-located with individual plates
 
 ---
@@ -179,8 +179,6 @@ As part of batch verification, sensors are placed in a sandbox and exposed to a 
 5. Gao, Z. et al. (2017). A novel approach to evaluate soil heat flux calculation. *JGR Atmospheres*, 122, 6934–6949.
 
 ---
-
-## Contact
 
 Anthony Edwards — aedwards@ucar.edu  
 Earth Observing Laboratory, NSF National Center for Atmospheric Research (NCAR)
