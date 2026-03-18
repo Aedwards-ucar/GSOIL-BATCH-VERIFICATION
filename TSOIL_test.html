@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gsoil vs Tsoil — NCAR Callab Mar 12 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Code+Pro:wght@400;600&display=swap');
+  :root {
+    --bg:#f5f6f8; --panel:#fff; --border:#d0d6de; --bs:#b0bac6;
+    --accent:#1a5fa8; --text:#1a2330; --muted:#5a6878;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Source Sans 3',sans-serif;font-size:0.95rem;padding:32px 44px;}
+  h1{font-size:1.3rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;}
+  .sub{color:var(--muted);font-size:.88rem;margin-bottom:6px;}
+  .warn{background:#fff8e1;border-left:3px solid #f39c12;padding:10px 14px;font-size:.83rem;color:#7d5a00;margin-bottom:24px;line-height:1.5;}
+  .warn strong{color:#b7770d;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .panel{background:var(--panel);border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+  .panel.full{grid-column:1/-1;}
+  .ptitle{font-family:'Source Code Pro',monospace;font-size:.78rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.05em;border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:13px;}
+  .psub{font-size:.78rem;color:var(--muted);font-weight:400;letter-spacing:0;margin-top:2px;}
+  canvas{display:block;width:100%;}
+  .legrow{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;}
+  .legitem{display:flex;align-items:center;gap:7px;font-family:'Source Code Pro',monospace;font-size:.71rem;color:var(--muted);}
+  .legsw{width:22px;height:3px;border-radius:2px;flex-shrink:0;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+  .sbox{background:var(--bg);border:1px solid var(--border);padding:12px 14px;border-radius:3px;}
+  .slabel{font-family:'Source Code Pro',monospace;font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .sval{font-family:'Source Code Pro',monospace;font-size:1.2rem;font-weight:700;color:var(--accent);}
+  .sunit{font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .method{background:#f0f4fa;border-left:3px solid var(--accent);padding:14px 16px;font-size:.85rem;line-height:1.7;}
+  .method code{font-family:'Source Code Pro',monospace;background:#e8eef7;padding:1px 5px;border-radius:2px;font-size:.83rem;}
+  .eq-block{font-family:'Source Code Pro',monospace;font-size:.9rem;background:#fff;padding:10px 16px;
+    border:1px solid var(--border);display:inline-block;margin:8px 0;border-radius:3px;color:var(--text);}
+  .refs{margin-top:20px;background:var(--panel);border:1px solid var(--border);padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+  .refs h2{font-family:'Source Code Pro',monospace;font-size:.8rem;font-weight:700;text-transform:uppercase;
+    letter-spacing:.05em;border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:13px;}
+  .refs ol{padding-left:18px;font-size:.83rem;line-height:1.8;color:var(--text);}
+  .refs li{margin-bottom:6px;}
+  .refs a{color:var(--accent);}
+  .refnote{font-size:.8rem;color:var(--muted);margin-top:12px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<h1>Gsoil Heat Flux Plate vs. Tsoil Heat Storage Analysis</h1>
+<p class="sub">NCAR · Earth Observing Laboratory · Callab Sandbox Calibration · Mar 12–13, 2026 · 10-min averages</p>
+<p class="sub" style="margin-bottom:20px;">16 Gsoil heat flux plates (5 cm depth) · 4 Tsoil probe arrays (0.6–4.4 cm) · Lamp on: 16:30 UTC Mar 12</p>
+
+<div class="warn">
+  <strong>⚠ Preliminary Analysis — Known Limitations:</strong>
+  This is an exploratory calculation from a first-pass calibration test with several uncharacterized variables.
+  (1) Volumetric heat capacity C<sub>v</sub> = 1.2 MJ m⁻³ K⁻¹ is assumed for dry sand — actual sandbox sand properties (bulk density, moisture, organic content) were not measured during this test and will affect the storage estimate.
+  (2) The 4 Tsoil probes are positioned between the Gsoil sensor clusters (see layout diagram), not co-located with individual plates, so spatial averaging is approximate.
+  (3) Gsoil plates in dry sand are known to underestimate true flux by 2–38% due to thermal contact resistance and heat flow distortion (Sauer et al., 2003 [6]).
+  (4) The lamp-off transient produces large dT/dt spikes that may briefly saturate the storage calculation.
+  A future test with measured soil thermal properties (TP01 or similar) will substantially improve these estimates.
+</div>
+
+<div class="grid">
+  <div class="panel full">
+    <div class="ptitle">Surface Heat Flux: G(0) = G(z<sub>p</sub>) + ΔS
+      <div class="psub">Gsoil plate flux at z<sub>p</sub> = 5 cm + calorimetric storage correction [1,2] · shaded band = Gsoil mean–max range</div>
+    </div>
+    <canvas id="c-main" height="280"></canvas>
+    <div class="legrow">
+      <div class="legitem"><div class="legsw" style="background:#1a5fa8"></div>Gsoil mean (16 plates)</div>
+      <div class="legitem"><div class="legsw" style="background:#1a5fa8;opacity:.4"></div>Gsoil max envelope</div>
+      <div class="legitem"><div class="legsw" style="background:#e67e22"></div>G(0) — Probe 036</div>
+      <div class="legitem"><div class="legsw" style="background:#27ae60"></div>G(0) — Probe 139</div>
+      <div class="legitem"><div class="legsw" style="background:#8e44ad"></div>G(0) — Probe 141</div>
+      <div class="legitem"><div class="legsw" style="background:#c0392b"></div>G(0) — Probe 149</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Heat Storage ΔS per Tsoil Probe
+      <div class="psub">S = C<sub>v</sub> · (dT̄/dt) · z<sub>p</sub> &nbsp;[1,3]&nbsp; C<sub>v</sub> = 1.2 MJ m⁻³ K⁻¹ (assumed, dry sand)</div>
+    </div>
+    <canvas id="c-storage" height="240"></canvas>
+  </div>
+
+  <div class="panel">
+    <div class="ptitle">Individual Gsoil Plates — All 16
+      <div class="psub">Raw plate readings at 5 cm depth · W m⁻²</div>
+    </div>
+    <canvas id="c-gsoil" height="240"></canvas>
+  </div>
+
+  <div class="panel full">
+    <div class="ptitle">Peak Values Summary <span style="font-weight:400;color:var(--muted)">(at max mean Gsoil, ~18:40 UTC)</span></div>
+    <div class="stats">
+      <div class="sbox"><div class="slabel">Gsoil Mean (peak)</div><div class="sval" id="s-gmean">—</div><div class="sunit">W m⁻²</div></div>
+      <div class="sbox"><div class="slabel">Gsoil Max (peak)</div><div class="sval" id="s-gmax">—</div><div class="sunit">W m⁻²</div></div>
+      <div class="sbox"><div class="slabel">Avg Storage ΔS (peak)</div><div class="sval" id="s-storage">—</div><div class="sunit">W m⁻²</div></div>
+      <div class="sbox"><div class="slabel">Avg G(0) Surface Flux</div><div class="sval" id="s-g0">—</div><div class="sunit">W m⁻²</div></div>
+    </div>
+
+    <div class="method">
+      <strong>Method — Combination (Plate + Calorimetric) Approach:</strong><br><br>
+      The surface heat flux G(0) cannot be measured directly because heat flux plates must be buried below the surface to avoid
+      disturbing the near-surface thermal regime. The standard approach, established by Fuchs &amp; Tanner (1968) [1] and
+      described clearly in Cobos &amp; Baker (2003) [2], estimates G(0) by correcting the plate reading for heat stored in
+      the soil layer above the plate:<br><br>
+      <span class="eq-block">G(0) = G(z<sub>p</sub>) + ΔS</span><br><br>
+      where G(z<sub>p</sub>) is the Gsoil plate flux at depth z<sub>p</sub> = 0.05 m, and the storage term ΔS is computed
+      by the calorimetric method [1,2,3]:<br><br>
+      <span class="eq-block">ΔS = C<sub>v</sub> · (ΔT̄ / Δt) · z<sub>p</sub></span><br><br>
+      T̄ is the arithmetic mean of the 4 Tsoil temperatures spanning 0.6–4.4 cm depth, taken as representative of the mean
+      temperature of the 0–5 cm layer. Δt = 600 s (10-min interval). C<sub>v</sub> = 1.2 × 10⁶ J m⁻³ K⁻¹ is the
+      assumed volumetric heat capacity of dry sand [4]. This value is within the range reported by
+      <span style="font-family:'Source Code Pro',monospace;font-size:.83rem">Sauer et al. (2003) [5]</span> for dry sand
+      (1.09–1.48 MJ m⁻³ K⁻¹) but should be verified with in-situ measurement for a future test.<br><br>
+      Ochsner et al. (2007) [3] demonstrated that omitting the storage correction can cause plates at ~6 cm depth to
+      underestimate G(0) by more than 50% — consistent with what we observe here, where ΔS accounts for approximately
+      <strong id="pct-storage">—</strong>% of G(0) at peak.
+      Gao et al. (2017) [7] confirm the calorimetric method as the reference standard for G(0) estimation.
+    </div>
+  </div>
+</div>
+
+<div class="refs">
+  <h2>References</h2>
+  <ol>
+    <li>Fuchs, M. &amp; Tanner, C.B. (1968). Calibration and field test of soil heat flux plates.
+      <em>Soil Science Society of America Proceedings</em>, 32(3), 326–328.
+      <a href="https://doi.org/10.2136/sssaj1968.03615995003200030021x" target="_blank">doi:10.2136/sssaj1968.03615995003200030021x</a>
+      — Original formulation of the combination method: G(0) = G(z<sub>p</sub>) + ΔS.</li>
+    <li>Cobos, D.R. &amp; Baker, J.M. (2003). In situ measurement of soil heat flux with the gradient method.
+      <em>Vadose Zone Journal</em>, 2(4), 589–594.
+      <a href="https://doi.org/10.2136/vzj2003.5890" target="_blank">doi:10.2136/vzj2003.5890</a>
+      — Clear equation exposition of the combination (plate + calorimetric) method as applied here.</li>
+    <li>Ochsner, T.E., Sauer, T.J. &amp; Horton, R. (2007). Soil heat storage measurements in energy balance studies.
+      <em>Agronomy Journal</em>, 99(1), 311–319. — Documents &gt;50% underestimation when storage correction is omitted at ~6 cm depth.</li>
+    <li>Hillel, D. (1998). <em>Environmental Soil Physics</em>. Academic Press, San Diego.
+      — Tabulated values of volumetric heat capacity for dry sand (~1.1–1.3 MJ m⁻³ K⁻¹).</li>
+    <li>Sauer, T.J., Horton, R. &amp; Logsdon, S.D. (2003). Soil heat flux plate performance in laboratory and field conditions.
+      <em>Soil Science Society of America Journal</em>, 67(2), 627–634.
+      — Reports 2–38% underestimation by flux plates in dry sand under controlled conditions; motivates the importance of in-situ calibration.</li>
+    <li>Sauer, T.J., Ochsner, T.E. &amp; Horton, R. (2007). Soil heat flux plates: Heat flow distortion and thermal contact resistance.
+      <em>Agronomy Journal</em>, 99(1), 304–310.
+      <a href="https://www.researchgate.net/publication/277430717" target="_blank">ResearchGate</a>
+      — Detailed error analysis for heat flux plates in sandy soils.</li>
+    <li>Gao, Z. et al. (2017). A novel approach to evaluate soil heat flux calculation: an analytical review of nine methods.
+      <em>Journal of Geophysical Research: Atmospheres</em>, 122(13), 6934–6949.
+      <a href="https://doi.org/10.1002/2017JD027160" target="_blank">doi:10.1002/2017JD027160</a>
+      — Systematic comparison confirming the calorimetric method as the reference standard for G(0) estimation.</li>
+  </ol>
+</div>
+
+<script>
+const TIMES = ["16:30", "16:40", "16:50", "17:00", "17:10", "17:20", "17:30", "17:40", "17:50", "18:00", "18:10", "18:20", "18:30", "18:40", "18:50", "19:00", "19:10", "19:20", "19:30", "19:40", "19:50", "20:00", "20:10", "20:20", "20:30", "20:40", "20:50", "21:00", "21:10", "21:20", "21:30", "21:40", "21:50", "22:00", "22:10", "22:20", "22:30", "22:40", "22:50", "23:00", "23:10", "23:20", "23:30", "23:40", "23:50", "3/13 00:00", "3/13 00:10", "3/13 00:20", "3/13 00:30", "3/13 00:40", "3/13 00:50", "3/13 01:00", "3/13 01:10", "3/13 01:20", "3/13 01:30", "3/13 01:40", "3/13 01:50", "3/13 02:00", "3/13 02:10", "3/13 02:20", "3/13 02:30", "3/13 02:40", "3/13 02:50"];
+const N = TIMES.length;
+const GSOIL_MEAN = [1.161, 2.09, 7.003, 13.074, 18.028, 21.726, 24.283, 25.937, 27.058, 27.861, 28.411, 28.778, 28.995, 29.038, 28.975, 28.872, 28.831, 28.811, 28.775, 28.749, 28.7, 28.605, 28.509, 28.435, 28.364, 28.266, 28.186, 28.083, 27.905, 27.65, 27.355, 27.126, 26.959, 26.823, 26.655, 26.431, 26.234, 25.939, 22.515, 16.608, 11.316, 7.177, 4.049, 1.738, 0.036, -1.192, -2.06, -2.675, -3.114, -3.419, -3.614, -3.726, -3.768, -3.748, -3.695, -3.615, -3.512, -3.392, -3.262, -3.124, -2.987, -2.854, -2.722];
+const GSOIL_MAX  = [1.276, 3.728, 12.709, 21.205, 27.381, 31.63, 34.387, 36.042, 37.007, 37.516, 37.785, 37.965, 38.066, 37.967, 37.82, 37.739, 37.745, 37.764, 37.756, 37.718, 37.658, 37.596, 37.528, 37.428, 37.312, 37.18, 37.086, 36.971, 36.753, 36.421, 36.224, 36.19, 36.195, 36.214, 36.135, 35.965, 35.8, 35.51, 31.306, 23.508, 16.4, 10.912, 7.509, 4.931, 2.996, 1.565, 0.503, -0.313, -0.944, -1.409, -1.744, -1.97, -2.115, -2.21, -2.271, -2.283, -2.234, -2.161, -2.077, -1.996, -1.917, -1.833, -1.746];
+const S   = {'036':[null, 141.545, 137.274, 109.181, 88.599, 70.16, 54.277, 47.238, 43.005, 37.061, 33.249, 29.743, 25.151, 22.772, 20.606, 22.935, 19.956, 19.724, 19.057, 17.337, 16.746, 16.152, 14.543, 13.943, 12.485, 12.381, 11.301, 8.65, 6.217, 5.191, 8.067, 8.041, 8.1, 6.192, 4.361, 3.702, 3.847, -92.179, -134.59, -106.868, -87.756, -72.804, -61.683, -52.736, -46.131, -40.588, -36.151, -32.81, -29.787, -27.371, -25.261, -23.119, -21.793, -20.585, -19.148, -17.712, -16.698, -15.812, -14.995, -14.223, -13.591, -12.883, -12.216],'139':[null, 151.654, 148.411, 119.856, 96.288, 78.818, 62.275, 51.705, 45.596, 39.079, 35.39, 33.238, 27.878, 25.573, 22.827, 24.319, 22.541, 22.141, 20.85, 20.305, 18.891, 16.524, 16.338, 15.278, 14.308, 14.157, 12.725, 10.167, 7.503, 2.542, 4.37, 4.958, 4.86, 4.537, 2.157, 1.32, 0.503, -94.297, -146.646, -115.6, -94.806, -78.766, -65.992, -56.704, -49.798, -43.388, -38.846, -35.618, -32.063, -29.38, -27.314, -25.274, -23.232, -21.791, -20.332, -18.683, -17.65, -16.772, -15.691, -14.868, -14.129, -13.495, -12.962],'141':[null, 132.223, 125.261, 100.367, 82.577, 64.828, 51.945, 45.418, 41.963, 36.399, 32.307, 29.105, 24.944, 22.557, 20.187, 21.566, 20.221, 19.497, 18.964, 18.09, 16.958, 16.06, 15.285, 14.043, 12.994, 12.746, 11.588, 9.747, 5.896, 3.16, 4.796, 5.846, 4.857, 3.809, 3.005, 3.605, 2.466, -85.781, -122.781, -97.579, -82.244, -68.573, -58.166, -50.257, -44.137, -38.758, -33.798, -31.132, -28.242, -26.068, -24.466, -22.485, -21.08, -19.66, -18.457, -17.566, -16.469, -15.659, -14.788, -14.134, -13.596, -12.838, -12.114],'149':[null, 142.908, 138.332, 110.018, 92.506, 76.676, 61.124, 51.978, 45.787, 38.953, 35.058, 32.828, 27.638, 25.789, 22.967, 24.72, 23.259, 21.936, 20.298, 20.025, 18.937, 17.177, 15.548, 15.268, 13.713, 14.393, 13.002, 10.228, 7.587, 5.56, 7.562, 7.429, 7.302, 5.841, 3.248, 2.184, 2.279, -92.096, -135.346, -109.742, -90.178, -75.998, -64.944, -56.022, -48.953, -43.215, -39.218, -35.92, -32.356, -29.633, -27.471, -25.219, -23.553, -22.229, -20.616, -18.792, -17.799, -16.771, -15.818, -14.98, -14.184, -13.476, -12.941]};
+const G0  = {'036':[null, 143.635, 144.278, 122.255, 106.627, 91.886, 78.56, 73.176, 70.063, 64.922, 61.659, 58.521, 54.146, 51.81, 49.58, 51.806, 48.788, 48.535, 47.831, 46.086, 45.446, 44.758, 43.053, 42.378, 40.849, 40.647, 39.487, 36.733, 34.122, 32.841, 35.422, 35.167, 35.058, 33.014, 31.015, 30.133, 30.081, -66.239, -112.074, -90.26, -76.44, -65.626, -57.634, -50.997, -46.095, -41.779, -38.211, -35.485, -32.901, -30.79, -28.875, -26.845, -25.561, -24.333, -22.843, -21.327, -20.21, -19.205, -18.257, -17.347, -16.578, -15.737, -14.938],'139':[null, 153.744, 155.414, 132.93, 114.316, 100.544, 86.558, 77.642, 72.654, 66.939, 63.801, 62.016, 56.873, 54.611, 51.802, 53.19, 51.372, 50.953, 49.625, 49.054, 47.592, 45.13, 44.847, 43.713, 42.672, 42.423, 40.911, 38.25, 35.408, 30.192, 31.725, 32.084, 31.818, 31.36, 28.812, 27.752, 26.737, -68.358, -124.131, -98.992, -83.489, -71.589, -61.943, -54.965, -49.762, -44.579, -40.906, -38.292, -35.177, -32.798, -30.927, -29.0, -26.999, -25.54, -24.026, -22.298, -21.162, -20.164, -18.952, -17.992, -17.115, -16.349, -15.684],'141':[null, 134.313, 132.264, 113.441, 100.605, 86.554, 76.228, 71.356, 69.021, 64.259, 60.718, 57.883, 53.939, 51.595, 49.161, 50.438, 49.052, 48.309, 47.739, 46.839, 45.659, 44.666, 43.794, 42.478, 41.358, 41.012, 39.773, 37.83, 33.801, 30.81, 32.151, 32.973, 31.816, 30.631, 29.66, 30.036, 28.7, -59.842, -100.266, -80.971, -70.928, -61.396, -54.117, -48.519, -44.101, -39.95, -35.858, -33.807, -31.357, -29.487, -28.08, -26.211, -24.848, -23.409, -22.151, -21.181, -19.98, -19.052, -18.05, -17.258, -16.582, -15.692, -14.836],'149':[null, 144.998, 145.335, 123.092, 110.534, 98.402, 85.407, 77.915, 72.846, 66.814, 63.469, 61.606, 56.632, 54.827, 51.942, 53.592, 52.09, 50.748, 49.073, 48.775, 47.637, 45.783, 44.057, 43.703, 42.076, 42.658, 41.188, 38.311, 35.492, 33.21, 34.917, 34.555, 34.261, 32.663, 29.903, 28.615, 28.513, -66.157, -112.831, -93.133, -78.861, -68.821, -60.895, -54.284, -48.916, -44.406, -41.278, -38.595, -35.471, -33.052, -31.085, -28.944, -27.32, -25.978, -24.31, -22.407, -21.311, -20.163, -19.08, -18.104, -17.171, -16.33, -15.663]};
+const GI  = {'112':[1.133, 1.352, 3.144, 6.135, 8.997, 11.379, 13.129, 14.282, 15.141, 15.876, 16.479, 16.932, 17.224, 17.367, 17.41, 17.395, 17.368, 17.322, 17.255, 17.241, 17.235, 17.172, 17.082, 17.029, 16.982, 16.939, 16.892, 16.838, 16.728, 16.47, 16.292, 16.171, 16.087, 16.005, 15.894, 15.762, 15.669, 15.951, 14.777, 11.992, 8.964, 6.271, 4.025, 2.253, 0.877, -0.167, -0.948, -1.49, -1.866, -2.132, -2.314, -2.437, -2.511, -2.541, -2.535, -2.519, -2.499, -2.456, -2.388, -2.316, -2.248, -2.186, -2.127],'114':[1.162, 2.236, 8.277, 15.732, 21.722, 26.108, 29.109, 31.044, 32.352, 33.29, 33.903, 34.282, 34.532, 34.569, 34.485, 34.352, 34.289, 34.223, 34.164, 34.14, 34.102, 34.021, 33.916, 33.833, 33.737, 33.619, 33.533, 33.408, 33.215, 32.934, 32.421, 31.91, 31.495, 31.136, 30.832, 30.528, 30.274, 29.811, 25.803, 18.854, 12.617, 7.77, 4.153, 1.509, -0.429, -1.812, -2.774, -3.435, -3.904, -4.222, -4.422, -4.537, -4.571, -4.534, -4.455, -4.347, -4.219, -4.074, -3.917, -3.746, -3.574, -3.409, -3.243],'115':[1.099, 1.75, 5.999, 11.703, 16.433, 20.094, 22.644, 24.283, 25.46, 26.401, 27.099, 27.567, 27.829, 27.916, 27.885, 27.803, 27.782, 27.747, 27.684, 27.652, 27.589, 27.498, 27.417, 27.343, 27.26, 27.157, 27.06, 26.939, 26.741, 26.452, 26.201, 26.034, 25.946, 25.858, 25.697, 25.548, 25.478, 25.378, 22.66, 17.325, 12.237, 8.097, 4.898, 2.496, 0.693, -0.623, -1.582, -2.255, -2.734, -3.07, -3.292, -3.429, -3.494, -3.508, -3.486, -3.435, -3.371, -3.286, -3.175, -3.052, -2.934, -2.827, -2.716],'117':[1.129, 1.435, 3.967, 7.783, 11.198, 13.906, 15.911, 17.261, 18.187, 18.885, 19.408, 19.771, 19.972, 20.041, 20.027, 19.994, 19.986, 20.047, 20.105, 20.115, 20.094, 20.059, 20.02, 19.962, 19.89, 19.818, 19.754, 19.702, 19.62, 19.473, 19.514, 19.712, 19.896, 20.04, 20.094, 20.125, 20.118, 20.04, 18.441, 14.768, 10.932, 7.77, 5.279, 3.33, 1.833, 0.726, -0.113, -0.765, -1.271, -1.64, -1.896, -2.075, -2.189, -2.256, -2.291, -2.283, -2.234, -2.161, -2.077, -1.996, -1.917, -1.833, -1.746],'118':[1.178, 1.94, 6.34, 11.945, 16.534, 19.918, 22.207, 23.655, 24.655, 25.416, 25.95, 26.285, 26.487, 26.506, 26.423, 26.304, 26.235, 26.171, 26.095, 26.041, 25.973, 25.886, 25.784, 25.693, 25.61, 25.512, 25.431, 25.313, 25.129, 24.843, 24.382, 23.897, 23.474, 23.09, 22.752, 22.468, 22.269, 21.964, 19.143, 14.024, 9.304, 5.528, 2.664, 0.546, -1.027, -2.165, -2.954, -3.47, -3.812, -4.037, -4.178, -4.255, -4.267, -4.216, -4.134, -4.033, -3.925, -3.803, -3.67, -3.52, -3.37, -3.227, -3.083],'119':[1.061, 1.423, 4.127, 8.188, 11.875, 14.856, 17.009, 18.427, 19.457, 20.295, 20.972, 21.454, 21.723, 21.854, 21.888, 21.876, 21.863, 21.827, 21.77, 21.764, 21.744, 21.666, 21.572, 21.508, 21.459, 21.417, 21.352, 21.277, 21.153, 20.947, 20.857, 20.847, 20.907, 20.984, 20.979, 20.918, 20.906, 21.052, 19.429, 15.603, 11.654, 8.266, 5.481, 3.31, 1.663, 0.422, -0.503, -1.174, -1.668, -2.023, -2.263, -2.417, -2.505, -2.543, -2.546, -2.528, -2.501, -2.452, -2.375, -2.292, -2.21, -2.138, -2.064],'120':[1.214, 3.062, 10.61, 18.273, 23.945, 27.847, 30.325, 31.814, 32.769, 33.338, 33.627, 33.793, 33.86, 33.742, 33.526, 33.303, 33.164, 33.043, 32.921, 32.836, 32.714, 32.499, 32.315, 32.247, 32.153, 32.001, 31.894, 31.732, 31.448, 31.054, 30.307, 29.613, 29.055, 28.643, 28.338, 27.951, 27.584, 26.873, 21.573, 14.131, 8.189, 3.798, 0.624, -1.581, -3.139, -4.192, -4.855, -5.263, -5.521, -5.671, -5.739, -5.738, -5.669, -5.523, -5.35, -5.16, -4.951, -4.742, -4.54, -4.328, -4.112, -3.905, -3.695],'121':[1.054, 1.851, 6.873, 13.508, 19.08, 23.241, 26.184, 28.139, 29.416, 30.251, 30.753, 31.041, 31.239, 31.295, 31.248, 31.152, 31.132, 31.209, 31.264, 31.267, 31.253, 31.211, 31.14, 31.06, 30.989, 30.902, 30.837, 30.772, 30.612, 30.415, 30.246, 30.148, 30.059, 29.993, 29.836, 29.536, 29.193, 28.761, 25.012, 18.302, 12.336, 7.801, 4.464, 2.055, 0.297, -0.97, -1.857, -2.508, -2.988, -3.321, -3.529, -3.645, -3.696, -3.69, -3.642, -3.561, -3.452, -3.319, -3.177, -3.035, -2.895, -2.753, -2.614],'122':[1.122, 2.103, 8.189, 16.179, 22.823, 27.752, 31.229, 33.566, 35.116, 36.147, 36.771, 37.139, 37.372, 37.435, 37.409, 37.321, 37.304, 37.32, 37.311, 37.292, 37.267, 37.204, 37.087, 37.006, 36.945, 36.867, 36.814, 36.744, 36.575, 36.309, 35.969, 35.669, 35.412, 35.219, 35.021, 34.739, 34.427, 34.011, 29.763, 22.051, 15.093, 9.74, 5.747, 2.855, 0.764, -0.737, -1.796, -2.567, -3.137, -3.531, -3.777, -3.92, -3.986, -3.982, -3.935, -3.851, -3.728, -3.583, -3.428, -3.269, -3.106, -2.945, -2.79],'123':[1.247, 2.22, 8.412, 16.425, 23.025, 27.949, 31.386, 33.632, 35.166, 36.287, 37.031, 37.519, 37.802, 37.876, 37.82, 37.739, 37.745, 37.764, 37.756, 37.718, 37.658, 37.596, 37.528, 37.428, 37.312, 37.18, 37.086, 36.971, 36.753, 36.421, 36.224, 36.19, 36.195, 36.214, 36.135, 35.965, 35.8, 35.51, 31.306, 23.508, 16.4, 10.878, 6.707, 3.637, 1.406, -0.21, -1.374, -2.243, -2.888, -3.342, -3.645, -3.828, -3.911, -3.939, -3.931, -3.879, -3.775, -3.651, -3.507, -3.353, -3.2, -3.051, -2.9],'142':[1.241, 1.859, 5.677, 10.818, 15.138, 18.476, 20.749, 22.203, 23.278, 24.177, 24.884, 25.368, 25.645, 25.743, 25.726, 25.651, 25.622, 25.581, 25.518, 25.495, 25.455, 25.369, 25.272, 25.191, 25.124, 25.04, 24.953, 24.839, 24.633, 24.327, 24.042, 23.781, 23.568, 23.352, 23.086, 22.844, 22.724, 22.616, 20.199, 15.361, 10.781, 6.97, 4.002, 1.777, 0.087, -1.172, -2.082, -2.684, -3.088, -3.371, -3.562, -3.679, -3.735, -3.738, -3.702, -3.652, -3.599, -3.525, -3.425, -3.313, -3.201, -3.097, -2.993],'150':[1.261, 3.144, 10.553, 17.996, 23.483, 27.349, 29.893, 31.446, 32.347, 32.822, 33.104, 33.314, 33.425, 33.327, 33.12, 32.843, 32.741, 32.701, 32.601, 32.548, 32.451, 32.249, 32.103, 31.982, 31.913, 31.742, 31.598, 31.421, 31.193, 31.019, 30.578, 30.165, 29.892, 29.688, 29.417, 28.955, 28.547, 27.736, 21.695, 13.73, 7.744, 3.515, 0.547, -1.539, -3.006, -3.998, -4.629, -5.066, -5.353, -5.534, -5.616, -5.614, -5.547, -5.39, -5.206, -5.008, -4.783, -4.561, -4.356, -4.15, -3.951, -3.753, -3.566],'151':[1.059, 1.51, 4.779, 9.509, 13.629, 16.867, 19.21, 20.766, 21.867, 22.716, 23.351, 23.804, 24.039, 24.135, 24.149, 24.135, 24.127, 24.15, 24.164, 24.172, 24.146, 24.09, 24.031, 23.954, 23.878, 23.81, 23.744, 23.678, 23.544, 23.36, 23.427, 23.63, 23.842, 24.024, 24.106, 24.142, 24.188, 24.185, 22.139, 17.568, 13.0, 9.237, 6.266, 3.975, 2.254, 0.987, 0.036, -0.692, -1.244, -1.648, -1.932, -2.119, -2.232, -2.296, -2.322, -2.312, -2.274, -2.215, -2.137, -2.055, -1.972, -1.889, -1.804],'152':[1.147, 1.632, 5.501, 11.295, 16.368, 20.317, 23.21, 25.22, 26.632, 27.655, 28.355, 28.842, 29.174, 29.334, 29.364, 29.369, 29.421, 29.533, 29.647, 29.696, 29.712, 29.728, 29.735, 29.712, 29.658, 29.596, 29.573, 29.526, 29.409, 29.206, 29.265, 29.496, 29.675, 29.789, 29.779, 29.674, 29.514, 29.287, 26.659, 20.954, 15.376, 10.912, 7.509, 4.931, 2.996, 1.565, 0.503, -0.313, -0.944, -1.409, -1.744, -1.97, -2.115, -2.21, -2.271, -2.289, -2.26, -2.202, -2.127, -2.048, -1.966, -1.88, -1.79],'153':[1.276, 2.195, 6.897, 12.489, 16.811, 19.93, 21.95, 23.218, 24.081, 24.699, 25.104, 25.373, 25.532, 25.502, 25.36, 25.233, 25.162, 25.101, 25.02, 24.972, 24.9, 24.767, 24.652, 24.605, 24.556, 24.458, 24.38, 24.265, 24.054, 23.772, 23.222, 22.619, 22.096, 21.661, 21.331, 21.023, 20.785, 20.512, 17.216, 11.995, 7.568, 4.131, 1.569, -0.296, -1.665, -2.637, -3.265, -3.645, -3.885, -4.052, -4.155, -4.2, -4.179, -4.092, -3.982, -3.865, -3.735, -3.595, -3.452, -3.298, -3.139, -2.981, -2.824],'154':[1.196, 3.728, 12.709, 21.205, 27.381, 31.63, 34.387, 36.042, 37.007, 37.516, 37.785, 37.965, 38.066, 37.967, 37.756, 37.478, 37.362, 37.245, 37.119, 37.04, 36.915, 36.674, 36.497, 36.407, 36.352, 36.194, 36.07, 35.907, 35.673, 35.398, 34.737, 34.142, 33.736, 33.469, 33.181, 32.721, 32.267, 31.338, 24.431, 15.569, 8.867, 4.154, 0.849, -1.447, -3.025, -4.083, -4.768, -5.228, -5.525, -5.695, -5.759, -5.752, -5.677, -5.515, -5.324, -5.115, -4.882, -4.652, -4.434, -4.216, -3.995, -3.787, -3.594]};
+const PC  = {'036':'#e67e22','139':'#27ae60','141':'#8e44ad','149':'#c0392b'};
+const PAD = {t:18,r:20,b:40,l:54};
+
+function dpr(){return window.devicePixelRatio||1;}
+function sc(id,h){
+  const c=document.getElementById(id),D=dpr(),w=c.parentElement.clientWidth;
+  c.width=w*D;c.height=h*D;c.style.width=w+'px';c.style.height=h+'px';
+  const ctx=c.getContext('2d');ctx.setTransform(D,0,0,D,0,0);
+  return{ctx,W:w,H:h};
+}
+function ax(ctx,W,H,yMin,yMax){
+  const p=PAD;
+  ctx.strokeStyle='#c0c8d4';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(p.l,p.t);ctx.lineTo(p.l,H-p.b);ctx.lineTo(W-p.r,H-p.b);ctx.stroke();
+  for(let i=0;i<=5;i++){
+    const v=yMin+(i/5)*(yMax-yMin),y=H-p.b-(i/5)*(H-p.t-p.b);
+    ctx.strokeStyle='rgba(180,192,208,.5)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();
+    ctx.fillStyle='#5a6878';ctx.font='10px Source Code Pro,monospace';
+    ctx.textAlign='right';ctx.fillText(v.toFixed(0),p.l-5,y+3);
+  }
+  const step=Math.ceil(N/10);
+  TIMES.forEach((t,i)=>{
+    if(i%step!==0)return;
+    const x=p.l+(i/(N-1))*(W-p.l-p.r);
+    ctx.fillStyle='#5a6878';ctx.font='10px Source Code Pro,monospace';
+    ctx.textAlign='center';ctx.fillText(t,x,H-p.b+14);
+    ctx.strokeStyle='rgba(180,192,208,.35)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,H-p.b);ctx.stroke();
+  });
+  ctx.save();ctx.translate(13,H/2);ctx.rotate(-Math.PI/2);
+  ctx.fillStyle='#5a6878';ctx.font='10px Source Code Pro,monospace';
+  ctx.textAlign='center';ctx.fillText('W m⁻²',0,0);ctx.restore();
+}
+function xp(i,W){return PAD.l+(i/(N-1))*(W-PAD.l-PAD.r);}
+function yp(v,mn,mx,H){return H-PAD.b-((v-mn)/(mx-mn))*(H-PAD.t-PAD.b);}
+function line(ctx,data,mn,mx,W,H,col,lw=1.5,dash=[]){
+  ctx.save();ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash);ctx.lineJoin='round';
+  ctx.beginPath();let s=false;
+  data.forEach((v,i)=>{if(v==null){s=false;return;}const x=xp(i,W),y=yp(v,mn,mx,H);
+    if(!s){ctx.moveTo(x,y);s=true;}else ctx.lineTo(x,y);});
+  ctx.stroke();ctx.restore();
+}
+
+function drawMain(){
+  const {ctx,W,H}=sc('c-main',280);
+  ctx.fillStyle='#f8f9fa';ctx.fillRect(0,0,W,H);
+  // Exclude first 2 steps (lamp-on spike artifact) from y-range calculation only
+  const skip=2;
+  const all=[...GSOIL_MEAN.slice(skip),...GSOIL_MAX.slice(skip),
+    ...Object.values(G0).flatMap(d=>d.slice(skip))].filter(v=>v!=null);
+  const mn=Math.floor(Math.min(0,...all)/10)*10,mx=Math.ceil(Math.max(...all)/10)*10;
+  ax(ctx,W,H,mn,mx);
+  // shaded band
+  ctx.save();ctx.fillStyle='rgba(26,95,168,.08)';ctx.beginPath();
+  let s=false;
+  GSOIL_MEAN.forEach((v,i)=>{if(v==null)return;const x=xp(i,W),y=yp(v,mn,mx,H);s?ctx.lineTo(x,y):(ctx.moveTo(x,y),s=true);});
+  for(let i=GSOIL_MAX.length-1;i>=0;i--){const v=GSOIL_MAX[i];if(v!=null)ctx.lineTo(xp(i,W),yp(v,mn,mx,H));}
+  ctx.closePath();ctx.fill();ctx.restore();
+  line(ctx,GSOIL_MEAN,mn,mx,W,H,'#1a5fa8',2);
+  line(ctx,GSOIL_MAX,mn,mx,W,H,'#1a5fa8',1,[4,3]);
+  Object.entries(G0).forEach(([p,data])=>line(ctx,data,mn,mx,W,H,PC[p],2));
+  // lamp-on marker
+  const lx=xp(0,W);
+  ctx.save();ctx.strokeStyle='rgba(180,60,60,.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(lx,PAD.t);ctx.lineTo(lx,H-PAD.b);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='rgba(180,60,60,.7)';
+  ctx.font='10px Source Code Pro,monospace';ctx.textAlign='left';
+  ctx.fillText('← lamp on 16:30',lx+4,PAD.t+12);ctx.restore();
+}
+
+function drawStorage(){
+  const {ctx,W,H}=sc('c-storage',240);
+  ctx.fillStyle='#f8f9fa';ctx.fillRect(0,0,W,H);
+  const skip=2;
+  const all=Object.values(S).flatMap(d=>d.slice(skip)).filter(v=>v!=null);
+  const mn=Math.floor(Math.min(0,...all)/10)*10,mx=Math.ceil(Math.max(...all)/10)*10;
+  ax(ctx,W,H,mn,mx);
+  Object.entries(S).forEach(([p,data])=>line(ctx,data,mn,mx,W,H,PC[p],1.8));
+  // zero line
+  ctx.save();ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.setLineDash([2,2]);
+  ctx.beginPath();ctx.moveTo(PAD.l,yp(0,mn,mx,H));ctx.lineTo(W-PAD.r,yp(0,mn,mx,H));ctx.stroke();ctx.restore();
+}
+
+function drawGsoil(){
+  const {ctx,W,H}=sc('c-gsoil',240);
+  ctx.fillStyle='#f8f9fa';ctx.fillRect(0,0,W,H);
+  const all=Object.values(GI).flat().filter(v=>v!=null);
+  const mn=Math.floor(Math.min(0,...all)/10)*10,mx=Math.ceil(Math.max(...all)/10)*10;
+  ax(ctx,W,H,mn,mx);
+  const cols=['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c',
+    '#e67e22','#34495e','#16a085','#d35400','#8e44ad','#27ae60',
+    '#c0392b','#2980b9','#f1c40f','#1a5fa8'];
+  Object.values(GI).forEach((data,i)=>line(ctx,data,mn,mx,W,H,cols[i%cols.length],1));
+}
+
+function stats(){
+  const pi=GSOIL_MEAN.reduce((bi,v,i)=>v!=null&&(GSOIL_MEAN[bi]==null||v>GSOIL_MEAN[bi])?i:bi,0);
+  const gm=GSOIL_MEAN[pi],gx=GSOIL_MAX[pi];
+  const pids=['036','139','141','149'];
+  const avgS=pids.map(p=>S[p][pi]).filter(v=>v!=null).reduce((a,b)=>a+b,0)/pids.length;
+  const avgG=pids.map(p=>G0[p][pi]).filter(v=>v!=null).reduce((a,b)=>a+b,0)/pids.length;
+  document.getElementById('s-gmean').textContent=gm!=null?gm.toFixed(1):'—';
+  document.getElementById('s-gmax').textContent=gx!=null?gx.toFixed(1):'—';
+  document.getElementById('s-storage').textContent=avgS.toFixed(1);
+  document.getElementById('s-g0').textContent=avgG.toFixed(1);
+  document.getElementById('pct-storage').textContent=Math.round(avgS/avgG*100);
+}
+
+drawMain();drawStorage();drawGsoil();stats();
+window.addEventListener('resize',()=>{drawMain();drawStorage();drawGsoil();});
+</script>
+</body>
+</html>
